@@ -82,6 +82,10 @@ import com.android.server.twilight.TwilightManager;
 import com.android.server.twilight.TwilightState;
 
 import java.io.FileDescriptor;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.ref.WeakReference;
 import java.time.DateTimeException;
@@ -95,6 +99,28 @@ import java.time.format.DateTimeParseException;
  * Controls the display's color transforms.
  */
 public final class ColorDisplayService extends SystemService {
+
+    /*
+     * KCal reset
+     * Write a string value to the specified file.
+     * @param filename      The filename
+     * @param value         The value
+     */
+    public static void writeValue(String filename, String value) {
+        try {
+            FileOutputStream fos = new FileOutputStream(new File(filename));
+            fos.write(value.getBytes());
+            fos.flush();
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static final String COLOR_FILE_ENABLE = "/sys/devices/platform/kcal_ctrl.0/kcal_enable";
+
 
     static final String TAG = "ColorDisplayService";
 
@@ -1392,6 +1418,11 @@ public final class ColorDisplayService extends SystemService {
             }
 
             mHandler.sendEmptyMessage(MSG_APPLY_NIGHT_DISPLAY_ANIMATED);
+
+	   if(!activated){
+		writeValue(COLOR_FILE_ENABLE, "0");
+		writeValue(COLOR_FILE_ENABLE, "1");
+	  }
         }
 
         int getColorTemperature() {
